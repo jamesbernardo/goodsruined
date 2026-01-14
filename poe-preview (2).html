@@ -1,0 +1,1416 @@
+<!DOCTYPE html><html lang="en"><head><meta name="x-poe-datastore-behavior" content="local_only"><meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://code.jquery.com https://unpkg.com https://d3js.org https://threejs.org https://cdn.plot.ly https://stackpath.bootstrapcdn.com https://maps.googleapis.com https://cdn.tailwindcss.com https://ajax.googleapis.com https://kit.fontawesome.com https://cdn.datatables.net https://maxcdn.bootstrapcdn.com https://code.highcharts.com https://tako-static-assets-production.s3.amazonaws.com https://www.youtube.com https://fonts.googleapis.com https://fonts.gstatic.com https://pfst.cf2.poecdn.net https://puc.poecdn.net https://i.imgur.com https://wikimedia.org https://*.icons8.com https://*.giphy.com https://picsum.photos https://images.unsplash.com; frame-src 'self' https://www.youtube.com https://trytako.com; child-src 'self'; manifest-src 'self'; worker-src 'self'; upgrade-insecure-requests; block-all-mixed-content;">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Good Ruins - Sound Manipulation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(135deg, #e8e0d5 0%, #d4c8b8 50%, #bfb1a0 100%);
+            color: #3d3528;
+            min-height: 100vh;
+            padding: 20px;
+            overflow-x: hidden;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        body.decaying {
+            animation: pageGlitch 0.3s infinite;
+        }
+
+        @keyframes pageGlitch {
+            0% {
+                transform: translate(0, 0) skew(0deg);
+                filter: hue-rotate(0deg);
+            }
+            20% {
+                transform: translate(-1px, 0.5px) skew(0.2deg);
+                filter: hue-rotate(2deg);
+            }
+            40% {
+                transform: translate(0.5px, -0.5px) skew(-0.1deg);
+                filter: hue-rotate(-1deg);
+            }
+            60% {
+                transform: translate(-0.5px, 1px) skew(0.1deg);
+                filter: hue-rotate(1deg);
+            }
+            80% {
+                transform: translate(1px, -1px) skew(-0.2deg);
+                filter: hue-rotate(-2deg);
+            }
+            100% {
+                transform: translate(0, 0) skew(0deg);
+                filter: hue-rotate(0deg);
+            }
+        }
+
+        /* Pixelation effect for high decay */
+        body.heavy-decay {
+            image-rendering: pixelated;
+            image-rendering: -moz-crisp-edges;
+            image-rendering: crisp-edges;
+        }
+
+        body.heavy-decay * {
+            text-rendering: optimizeSpeed;
+        }
+
+        /* Texture overlay inspired by the weathered surface */
+        .texture-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            opacity: 0.15;
+            z-index: 1;
+            background-image: 
+                repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(139, 111, 71, 0.03) 2px, rgba(139, 111, 71, 0.03) 4px),
+                repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(139, 111, 71, 0.03) 2px, rgba(139, 111, 71, 0.03) 4px);
+            transition: opacity 0.5s ease;
+        }
+
+        body.decaying .texture-overlay {
+            opacity: 0.35;
+            animation: textureShift 2s infinite;
+        }
+
+        @keyframes textureShift {
+            0%, 100% {
+                transform: translate(0, 0);
+            }
+            25% {
+                transform: translate(2px, -2px);
+            }
+            50% {
+                transform: translate(-2px, 2px);
+            }
+            75% {
+                transform: translate(2px, 2px);
+            }
+        }
+
+        /* Pixelation overlay for bitcrush effect */
+        .pixel-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            opacity: 0;
+            z-index: 1001;
+            background-image: 
+                repeating-linear-gradient(0deg, transparent, transparent 4px, rgba(0, 0, 0, 0.05) 4px, rgba(0, 0, 0, 0.05) 5px),
+                repeating-linear-gradient(90deg, transparent, transparent 4px, rgba(0, 0, 0, 0.05) 4px, rgba(0, 0, 0, 0.05) 5px);
+            transition: opacity 0.3s ease;
+        }
+
+        body.heavy-decay .pixel-overlay {
+            opacity: 0.6;
+        }
+
+        /* Rust stains effect */
+        .rust-stain {
+            position: fixed;
+            border-radius: 50%;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 0;
+            transition: all 1s ease;
+        }
+
+        body.decaying .rust-stain {
+            opacity: 1;
+            animation: rustSpread 3s ease-in-out infinite;
+        }
+
+        @keyframes rustSpread {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.15);
+            }
+        }
+
+        .rust-stain:nth-child(1) {
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(139, 69, 19, 0.3) 0%, transparent 70%);
+            top: 10%;
+            right: 15%;
+        }
+
+        .rust-stain:nth-child(2) {
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(160, 82, 45, 0.25) 0%, transparent 70%);
+            bottom: 5%;
+            left: 10%;
+        }
+
+        .rust-stain:nth-child(3) {
+            width: 250px;
+            height: 250px;
+            background: radial-gradient(circle, rgba(101, 67, 33, 0.28) 0%, transparent 70%);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .rust-stain:nth-child(4) {
+            width: 350px;
+            height: 350px;
+            background: radial-gradient(circle, rgba(139, 69, 19, 0.22) 0%, transparent 75%);
+            top: 30%;
+            left: 20%;
+        }
+
+        .rust-stain:nth-child(5) {
+            width: 280px;
+            height: 280px;
+            background: radial-gradient(circle, rgba(160, 82, 45, 0.26) 0%, transparent 70%);
+            bottom: 30%;
+            right: 25%;
+        }
+
+        .rust-stain:nth-child(6) {
+            width: 320px;
+            height: 320px;
+            background: radial-gradient(circle, rgba(101, 67, 33, 0.24) 0%, transparent 72%);
+            top: 70%;
+            left: 35%;
+        }
+
+        .rust-stain:nth-child(7) {
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, rgba(139, 69, 19, 0.35) 0%, transparent 68%);
+            top: 15%;
+            left: 70%;
+        }
+
+        .rust-stain:nth-child(8) {
+            width: 380px;
+            height: 380px;
+            background: radial-gradient(circle, rgba(160, 82, 45, 0.2) 0%, transparent 75%);
+            bottom: 15%;
+            right: 10%;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 2;
+            transition: all 0.3s ease;
+        }
+
+        body.decaying .container {
+            filter: contrast(1.1) saturate(0.8);
+        }
+
+        body.heavy-decay .container {
+            filter: contrast(1.2) saturate(0.6) blur(0.3px);
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            position: relative;
+        }
+
+        h1 {
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            letter-spacing: 12px;
+            margin-bottom: 10px;
+            color: #4a3f2f;
+            text-transform: uppercase;
+            font-weight: 900;
+            position: relative;
+            text-shadow: 
+                2px 2px 0px rgba(139, 69, 19, 0.1),
+                -1px -1px 0px rgba(255, 255, 255, 0.3);
+            transition: all 0.5s ease;
+        }
+
+        body.decaying h1 {
+            opacity: 0.85;
+            filter: blur(0.2px);
+        }
+
+        body.heavy-decay h1 {
+            opacity: 0.6;
+            filter: blur(0.8px);
+            text-shadow: 
+                3px 3px 0px rgba(139, 69, 19, 0.4),
+                -2px -2px 0px rgba(255, 255, 255, 0.5),
+                5px 0px 12px rgba(139, 69, 19, 0.5),
+                0px 5px 12px rgba(139, 69, 19, 0.3);
+            letter-spacing: 13px;
+        }
+
+        h1::after {
+            content: 'GOOD RUINS';
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            color: #8b5a3c;
+            letter-spacing: 12px;
+            transition: opacity 0.5s ease;
+            pointer-events: none;
+        }
+
+        body.decaying h1::after {
+            opacity: 0.3;
+            animation: slowGlitch 1.5s ease-in-out infinite;
+        }
+
+        body.heavy-decay h1::after {
+            opacity: 0.6;
+        }
+
+        @keyframes slowGlitch {
+            0%, 90%, 100% {
+                opacity: 0.3;
+                transform: translate(0, 0);
+            }
+            92% {
+                opacity: 0.6;
+                transform: translate(-2px, 1px);
+            }
+            96% {
+                opacity: 0.7;
+                transform: translate(2px, -1px);
+            }
+        }
+
+        /* Additional degraded layer for heavy decay */
+        h1::before {
+            content: 'GOOD RUINS';
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            color: #5a4a38;
+            letter-spacing: 12px;
+            transition: opacity 0.5s ease;
+            pointer-events: none;
+            filter: blur(1px);
+        }
+
+        body.heavy-decay h1::before {
+            opacity: 0.5;
+            animation: heavyDecayGlitch 2s ease-in-out infinite;
+        }
+
+        @keyframes heavyDecayGlitch {
+            0%, 85%, 100% {
+                opacity: 0.5;
+                transform: translate(0, 0);
+            }
+            88% {
+                opacity: 0.8;
+                transform: translate(3px, -2px);
+            }
+            94% {
+                opacity: 0.9;
+                transform: translate(-2px, 2px);
+            }
+        }
+
+        .subtitle {
+            font-size: 0.85rem;
+            opacity: 0.5;
+            letter-spacing: 4px;
+            color: #5a4a38;
+            text-transform: uppercase;
+            transition: all 0.5s ease;
+        }
+
+        body.decaying .subtitle {
+            opacity: 0.35;
+            filter: blur(0.3px);
+        }
+
+        body.heavy-decay .subtitle {
+            opacity: 0.2;
+            filter: blur(0.6px);
+            text-shadow: 
+                2px 2px 4px rgba(139, 69, 19, 0.4),
+                -1px -1px 2px rgba(255, 255, 255, 0.3);
+        }
+
+        .upload-zone {
+            border: 3px solid #8b6f47;
+            border-radius: 3px;
+            padding: 50px;
+            text-align: center;
+            margin-bottom: 30px;
+            background: rgba(255, 255, 255, 0.3);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 
+                inset 0 2px 4px rgba(139, 111, 71, 0.1),
+                0 4px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .upload-zone::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: repeating-linear-gradient(
+                45deg,
+                transparent,
+                transparent 10px,
+                rgba(139, 111, 71, 0.02) 10px,
+                rgba(139, 111, 71, 0.02) 20px
+            );
+            pointer-events: none;
+        }
+
+        .upload-zone:hover {
+            border-color: #6b5638;
+            background: rgba(255, 255, 255, 0.4);
+            transform: translateY(-2px);
+            box-shadow: 
+                inset 0 2px 4px rgba(139, 111, 71, 0.15),
+                0 6px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .upload-zone.active {
+            border-color: #4a3f2f;
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        body.heavy-decay .upload-zone {
+            filter: blur(0.3px);
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .controls {
+            display: none;
+            gap: 20px;
+            flex-direction: column;
+        }
+
+        .controls.visible {
+            display: flex;
+        }
+
+        .control-group {
+            background: rgba(255, 255, 255, 0.35);
+            padding: 20px;
+            border-radius: 2px;
+            border: 2px solid rgba(139, 111, 71, 0.3);
+            transition: all 0.3s ease;
+            position: relative;
+            box-shadow: 
+                inset 0 1px 3px rgba(0, 0, 0, 0.05),
+                0 2px 6px rgba(0, 0, 0, 0.03);
+        }
+
+        body.decaying .control-group {
+            animation: controlShake 1s infinite;
+        }
+
+        body.heavy-decay .control-group {
+            filter: blur(0.2px);
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        @keyframes controlShake {
+            0%, 100% {
+                transform: translateX(0);
+            }
+            25% {
+                transform: translateX(-0.5px) rotate(-0.1deg);
+            }
+            75% {
+                transform: translateX(0.5px) rotate(0.1deg);
+            }
+        }
+
+        .control-group::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+        }
+
+        .control-group:hover {
+            border-color: rgba(139, 111, 71, 0.5);
+            background: rgba(255, 255, 255, 0.45);
+            transform: translateX(2px);
+        }
+
+        .control-label {
+            display: block;
+            margin-bottom: 12px;
+            font-size: 0.75rem;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            opacity: 0.7;
+            font-weight: bold;
+            color: #4a3f2f;
+            transition: all 0.3s ease;
+        }
+
+        body.heavy-decay .control-label {
+            opacity: 0.5;
+            filter: blur(0.3px);
+        }
+
+        .slider-container {
+            position: relative;
+            width: 100%;
+            height: 80px;
+            margin: 10px 0;
+        }
+
+        /* Building illustration container */
+        .building-track {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            display: flex;
+            align-items: flex-end;
+            pointer-events: none;
+        }
+
+        /* Individual building segments */
+        .building-segment {
+            flex: 1;
+            height: 100%;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        /* Base building shape */
+        .building-segment::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 5%;
+            right: 5%;
+            height: 80%;
+            background: linear-gradient(to bottom, #8b6f47 0%, #6b5638 100%);
+            border: 1px solid rgba(61, 53, 40, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        /* Windows on buildings */
+        .building-segment::after {
+            content: '';
+            position: absolute;
+            bottom: 10%;
+            left: 15%;
+            right: 15%;
+            height: 60%;
+            background-image: 
+                repeating-linear-gradient(0deg, transparent, transparent 8px, rgba(0, 0, 0, 0.15) 8px, rgba(0, 0, 0, 0.15) 10px),
+                repeating-linear-gradient(90deg, transparent, transparent 8px, rgba(0, 0, 0, 0.15) 8px, rgba(0, 0, 0, 0.15) 10px);
+            pointer-events: none;
+        }
+
+        /* Destroyed state */
+        .building-segment.destroyed::before {
+            height: 30%;
+            background: linear-gradient(to bottom, #5a4a38 0%, #4a3f2f 100%);
+            border-top: 3px solid rgba(139, 69, 19, 0.4);
+            box-shadow: 
+                0 -2px 4px rgba(139, 69, 19, 0.3),
+                inset 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .building-segment.destroyed::after {
+            display: none;
+        }
+
+        /* Rubble at the base */
+        .building-segment.destroyed .rubble {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 8px;
+            background: linear-gradient(90deg, 
+                transparent 0%, 
+                rgba(101, 67, 33, 0.4) 10%,
+                rgba(139, 69, 19, 0.5) 30%,
+                rgba(101, 67, 33, 0.4) 50%,
+                rgba(139, 69, 19, 0.5) 70%,
+                rgba(101, 67, 33, 0.4) 90%,
+                transparent 100%
+            );
+            border-radius: 0 0 2px 2px;
+        }
+
+        /* Actual range input */
+        input[type="range"] {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 60px;
+            opacity: 0;
+            cursor: pointer;
+            z-index: 10;
+            -webkit-appearance: none;
+        }
+
+        /* Thumb for interaction (invisible but functional) */
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 40px;
+            height: 80px;
+            cursor: pointer;
+            opacity: 0;
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 40px;
+            height: 80px;
+            cursor: pointer;
+            opacity: 0;
+            border: none;
+            background: transparent;
+        }
+
+        .value-display {
+            display: inline-block;
+            margin-left: 10px;
+            font-size: 0.75rem;
+            opacity: 0.5;
+            min-width: 50px;
+            font-weight: normal;
+        }
+
+        .playback-controls {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            background: rgba(139, 111, 71, 0.25);
+            border: 2px solid #8b6f47;
+            color: #3d3528;
+            padding: 14px 28px;
+            border-radius: 2px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-size: 0.8rem;
+            letter-spacing: 2px;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            font-weight: bold;
+            position: relative;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 50%;
+            background: linear-gradient(to bottom, rgba(255, 255, 255, 0.2), transparent);
+            pointer-events: none;
+        }
+
+        button:hover {
+            background: rgba(139, 111, 71, 0.4);
+            border-color: #6b5638;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        button:active {
+            transform: translateY(0);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        body.heavy-decay button {
+            filter: blur(0.3px);
+        }
+
+        .noise-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            opacity: 0.05;
+            z-index: 1000;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.95' numOctaves='4' /%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' /%3E%3C/svg%3E");
+            transition: opacity 0.3s ease;
+        }
+
+        body.decaying .noise-overlay {
+            opacity: 0.15;
+            animation: noiseFlicker 0.1s infinite;
+        }
+
+        body.heavy-decay .noise-overlay {
+            opacity: 0.3;
+        }
+
+        @keyframes noiseFlicker {
+            0%, 100% {
+                opacity: 0.15;
+            }
+            50% {
+                opacity: 0.25;
+            }
+        }
+
+        /* Scratches and wear marks */
+        .wear-mark {
+            position: fixed;
+            height: 1px;
+            background: rgba(139, 69, 19, 0);
+            pointer-events: none;
+            z-index: 999;
+            transition: all 0.5s ease;
+        }
+
+        body.decaying .wear-mark {
+            background: rgba(139, 69, 19, 0.4);
+            height: 2px;
+            animation: wearGrow 1.5s ease-in-out infinite;
+        }
+
+        @keyframes wearGrow {
+            0%, 100% {
+                opacity: 0.4;
+                transform: scaleX(1);
+            }
+            50% {
+                opacity: 0.7;
+                transform: scaleX(1.05);
+            }
+        }
+
+        .wear-mark:nth-child(9) {
+            width: 30%;
+            top: 20%;
+            left: 10%;
+            transform: rotate(-3deg);
+        }
+
+        .wear-mark:nth-child(10) {
+            width: 25%;
+            top: 60%;
+            right: 15%;
+            transform: rotate(2deg);
+        }
+
+        .wear-mark:nth-child(11) {
+            width: 40%;
+            bottom: 25%;
+            left: 20%;
+            transform: rotate(-1deg);
+        }
+
+        .wear-mark:nth-child(12) {
+            width: 35%;
+            top: 35%;
+            right: 20%;
+            transform: rotate(1.5deg);
+        }
+
+        .wear-mark:nth-child(13) {
+            width: 28%;
+            bottom: 40%;
+            left: 35%;
+            transform: rotate(-2deg);
+        }
+
+        .wear-mark:nth-child(14) {
+            width: 32%;
+            top: 75%;
+            right: 25%;
+            transform: rotate(0.8deg);
+        }
+
+        .wear-mark:nth-child(15) {
+            width: 38%;
+            top: 15%;
+            left: 45%;
+            transform: rotate(-1.2deg);
+        }
+
+        .wear-mark:nth-child(16) {
+            width: 22%;
+            bottom: 18%;
+            right: 30%;
+            transform: rotate(2.5deg);
+        }
+
+        /* Digital artifacts that appear during heavy distortion */
+        .artifact {
+            position: fixed;
+            width: 100px;
+            height: 2px;
+            background: rgba(139, 69, 19, 0);
+            pointer-events: none;
+            z-index: 998;
+            opacity: 0;
+            transition: opacity 0.1s ease;
+        }
+
+        body.decaying .artifact {
+            background: rgba(139, 69, 19, 0.6);
+            opacity: 1;
+            animation: artifactGlitch 0.2s infinite;
+        }
+
+        @keyframes artifactGlitch {
+            0%, 100% {
+                transform: translateX(0);
+                opacity: 0;
+            }
+            50% {
+                transform: translateX(10px);
+                opacity: 0.8;
+            }
+        }
+
+        .artifact:nth-child(17) {
+            top: 25%;
+            left: 15%;
+            width: 120px;
+            height: 3px;
+        }
+
+        .artifact:nth-child(18) {
+            top: 55%;
+            right: 20%;
+            width: 90px;
+            height: 2px;
+        }
+
+        .artifact:nth-child(19) {
+            bottom: 30%;
+            left: 40%;
+            width: 150px;
+            height: 2px;
+        }
+
+        .artifact:nth-child(20) {
+            top: 40%;
+            right: 35%;
+            width: 110px;
+            height: 3px;
+        }
+
+        .artifact:nth-child(21) {
+            bottom: 45%;
+            left: 25%;
+            width: 95px;
+            height: 2px;
+        }
+
+        .artifact:nth-child(22) {
+            top: 65%;
+            left: 55%;
+            width: 130px;
+            height: 2px;
+        }
+
+        .artifact:nth-child(23) {
+            top: 18%;
+            right: 45%;
+            width: 105px;
+            height: 3px;
+        }
+
+        .artifact:nth-child(24) {
+            bottom: 22%;
+            right: 15%;
+            width: 115px;
+            height: 2px;
+        }
+
+        .artifact:nth-child(25) {
+            top: 80%;
+            left: 30%;
+            width: 140px;
+            height: 2px;
+        }
+
+        .artifact:nth-child(26) {
+            top: 50%;
+            right: 50%;
+            width: 85px;
+            height: 3px;
+        }
+
+        @media (max-width: 768px) {
+            .control-group {
+                padding: 15px;
+            }
+            
+            h1 {
+                letter-spacing: 6px;
+            }
+
+            h1::after,
+            h1::before {
+                letter-spacing: 6px;
+            }
+
+            .slider-container {
+                height: 60px;
+            }
+
+            .building-track {
+                height: 45px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="rust-stain"></div>
+    <div class="rust-stain"></div>
+    <div class="rust-stain"></div>
+    <div class="rust-stain"></div>
+    <div class="rust-stain"></div>
+    <div class="rust-stain"></div>
+    <div class="rust-stain"></div>
+    <div class="rust-stain"></div>
+    <div class="wear-mark"></div>
+    <div class="wear-mark"></div>
+    <div class="wear-mark"></div>
+    <div class="wear-mark"></div>
+    <div class="wear-mark"></div>
+    <div class="wear-mark"></div>
+    <div class="wear-mark"></div>
+    <div class="wear-mark"></div>
+    <div class="artifact"></div>
+    <div class="artifact"></div>
+    <div class="artifact"></div>
+    <div class="artifact"></div>
+    <div class="artifact"></div>
+    <div class="artifact"></div>
+    <div class="artifact"></div>
+    <div class="artifact"></div>
+    <div class="artifact"></div>
+    <div class="artifact"></div>
+    <div class="texture-overlay"></div>
+    <div class="pixel-overlay"></div>
+    <div class="noise-overlay"></div>
+    
+    <div class="container">
+        <header>
+            <h1>Good Ruins</h1>
+            <div class="subtitle">Create Beautiful Destruction</div>
+        </header>
+
+        <div class="upload-zone" id="uploadZone">
+            <p style="font-weight: bold; font-size: 0.9rem; margin-bottom: 8px;">Click or drag audio file here</p>
+            <p style="font-size: 0.75rem; opacity: 0.5; margin-top: 10px;">MP3, WAV, OGG supported</p>
+            <input type="file" id="audioFile" accept="audio/*">
+        </div>
+
+        <div class="controls" id="controls">
+            <div class="playback-controls">
+                <button id="playBtn">Play</button>
+                <button id="pauseBtn">Pause</button>
+                <button id="stopBtn">Stop</button>
+                <button id="resetBtn">Reset</button>
+            </div>
+
+            <div class="control-group">
+                <label class="control-label">
+                    Bit Crush
+                    <span class="value-display" id="bitcrushValue">16</span>
+                </label>
+                <div class="slider-container">
+                    <div class="building-track" id="bitcrushBuildings"></div>
+                    <input type="range" id="bitcrush" min="1" max="16" value="16" step="1">
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label class="control-label">
+                    Distortion
+                    <span class="value-display" id="distortionValue">0</span>
+                </label>
+                <div class="slider-container">
+                    <div class="building-track" id="distortionBuildings"></div>
+                    <input type="range" id="distortion" min="0" max="100" value="0" step="1">
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label class="control-label">
+                    Glitch
+                    <span class="value-display" id="glitchValue">0%</span>
+                </label>
+                <div class="slider-container">
+                    <div class="building-track" id="glitchBuildings"></div>
+                    <input type="range" id="glitch" min="0" max="100" value="0" step="1">
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label class="control-label">
+                    Reverb
+                    <span class="value-display" id="reverbValue">0s</span>
+                </label>
+                <div class="slider-container">
+                    <div class="building-track" id="reverbBuildings"></div>
+                    <input type="range" id="reverb" min="0" max="5" value="0" step="0.1">
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label class="control-label">
+                    Filter
+                    <span class="value-display" id="filterValue">22kHz</span>
+                </label>
+                <div class="slider-container">
+                    <div class="building-track" id="filterBuildings"></div>
+                    <input type="range" id="filter" min="200" max="22000" value="22000" step="100">
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label class="control-label">
+                    Compression
+                    <span class="value-display" id="compressionValue">0</span>
+                </label>
+                <div class="slider-container">
+                    <div class="building-track" id="compressionBuildings"></div>
+                    <input type="range" id="compression" min="0" max="20" value="0" step="1">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        let source = null;
+        let audioBuffer = null;
+        let isPlaying = false;
+        let startTime = 0;
+        let pauseTime = 0;
+        
+        // Audio nodes
+        let gainNode, filterNode, compressorNode, convolverNode, distortionNode, dryNode;
+        
+        // Get elements
+        const uploadZone = document.getElementById('uploadZone');
+        const audioFile = document.getElementById('audioFile');
+        const controls = document.getElementById('controls');
+        const playBtn = document.getElementById('playBtn');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        
+        // Effect controls
+        const bitcrushControl = document.getElementById('bitcrush');
+        const distortionControl = document.getElementById('distortion');
+        const glitchControl = document.getElementById('glitch');
+        const reverbControl = document.getElementById('reverb');
+        const filterControl = document.getElementById('filter');
+        const compressionControl = document.getElementById('compression');
+        
+        // Visual decay tracking
+        let decayLevel = 0;
+        
+        // Create building segments for each slider
+        function createBuildings(containerId, segmentCount) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+            for (let i = 0; i < segmentCount; i++) {
+                const segment = document.createElement('div');
+                segment.className = 'building-segment';
+                const rubble = document.createElement('div');
+                rubble.className = 'rubble';
+                segment.appendChild(rubble);
+                container.appendChild(segment);
+            }
+        }
+        
+        // Initialize all building tracks
+        createBuildings('bitcrushBuildings', 16);
+        createBuildings('distortionBuildings', 20);
+        createBuildings('glitchBuildings', 20);
+        createBuildings('reverbBuildings', 20);
+        createBuildings('filterBuildings', 20);
+        createBuildings('compressionBuildings', 20);
+        
+        // Update building destruction based on slider value
+        function updateBuildings(containerId, value, max, inverse = false) {
+            const container = document.getElementById(containerId);
+            const segments = container.querySelectorAll('.building-segment');
+            const percentage = inverse ? (1 - value / max) : (value / max);
+            const destroyCount = Math.floor(segments.length * percentage);
+            
+            segments.forEach((segment, index) => {
+                if (index < destroyCount) {
+                    segment.classList.add('destroyed');
+                } else {
+                    segment.classList.remove('destroyed');
+                }
+            });
+        }
+        
+        // Upload zone interaction
+        uploadZone.addEventListener('click', () => audioFile.click());
+        
+        uploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadZone.classList.add('active');
+        });
+        
+        uploadZone.addEventListener('dragleave', () => {
+            uploadZone.classList.remove('active');
+        });
+        
+        uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadZone.classList.remove('active');
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('audio/')) {
+                loadAudioFile(file);
+            }
+        });
+        
+        audioFile.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                loadAudioFile(file);
+            }
+        });
+        
+        function loadAudioFile(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                audioContext.decodeAudioData(e.target.result, (buffer) => {
+                    audioBuffer = buffer;
+                    controls.classList.add('visible');
+                    uploadZone.querySelector('p').textContent = `Loaded: ${file.name}`;
+                    initializeAudioNodes();
+                }, (error) => {
+                    console.error('Error decoding audio:', error);
+                    uploadZone.querySelector('p').textContent = 'Error loading file. Try another.';
+                });
+            };
+            reader.readAsArrayBuffer(file);
+        }
+        
+        function initializeAudioNodes() {
+            // Clean up old nodes if they exist
+            if (gainNode) {
+                try {
+                    gainNode.disconnect();
+                    filterNode.disconnect();
+                    compressorNode.disconnect();
+                    convolverNode.disconnect();
+                    distortionNode.disconnect();
+                    dryNode.disconnect();
+                } catch (e) {
+                    // Nodes may not be connected yet
+                }
+            }
+            
+            // Create audio nodes
+            gainNode = audioContext.createGain();
+            gainNode.gain.value = 1;
+            
+            filterNode = audioContext.createBiquadFilter();
+            filterNode.type = 'lowpass';
+            filterNode.frequency.value = 22000;
+            
+            compressorNode = audioContext.createDynamicsCompressor();
+            compressorNode.threshold.value = -50;
+            compressorNode.knee.value = 40;
+            compressorNode.ratio.value = 1;
+            compressorNode.attack.value = 0;
+            compressorNode.release.value = 0.25;
+            
+            convolverNode = audioContext.createConvolver();
+            dryNode = audioContext.createGain();
+            dryNode.gain.value = 1;
+            
+            // Create a simple impulse response for pass-through
+            createReverbImpulse(0);
+            
+            distortionNode = audioContext.createWaveShaper();
+            distortionNode.curve = makeDistortionCurve(0);
+            distortionNode.oversample = '4x';
+        }
+        
+        function makeDistortionCurve(amount) {
+            const samples = 44100;
+            const curve = new Float32Array(samples);
+            const deg = Math.PI / 180;
+            
+            for (let i = 0; i < samples; i++) {
+                const x = (i * 2) / samples - 1;
+                curve[i] = ((3 + amount) * x * 20 * deg) / (Math.PI + amount * Math.abs(x));
+            }
+            return curve;
+        }
+        
+        function createReverbImpulse(decay) {
+            const rate = audioContext.sampleRate;
+            const length = rate * Math.max(decay, 0.05); // Minimum 0.05s
+            const impulse = audioContext.createBuffer(2, length, rate);
+            const impulseL = impulse.getChannelData(0);
+            const impulseR = impulse.getChannelData(1);
+            
+            if (decay > 0) {
+                for (let i = 0; i < length; i++) {
+                    const n = length - i;
+                    impulseL[i] = (Math.random() * 2 - 1) * Math.pow(n / length, 2);
+                    impulseR[i] = (Math.random() * 2 - 1) * Math.pow(n / length, 2);
+                }
+            } else {
+                // Simple pass-through impulse
+                impulseL[0] = 1;
+                impulseR[0] = 1;
+            }
+            
+            convolverNode.buffer = impulse;
+        }
+        
+        function updateVisualDecay() {
+            // Calculate total decay level from all effects
+            const bitcrushDecay = (16 - parseInt(bitcrushControl.value)) / 16;
+            const distortionDecay = parseInt(distortionControl.value) / 100;
+            const glitchDecay = parseInt(glitchControl.value) / 100;
+            const reverbDecay = parseFloat(reverbControl.value) / 5;
+            const filterDecay = 1 - (parseInt(filterControl.value) / 22000);
+            const compressionDecay = parseInt(compressionControl.value) / 20;
+            
+            decayLevel = (bitcrushDecay + distortionDecay + glitchDecay + reverbDecay + filterDecay + compressionDecay) / 6;
+            
+            // Apply visual decay classes
+            if (decayLevel > 0.6) {
+                document.body.classList.add('heavy-decay');
+                document.body.classList.add('decaying');
+            } else if (decayLevel > 0.15) {
+                document.body.classList.remove('heavy-decay');
+                document.body.classList.add('decaying');
+            } else {
+                document.body.classList.remove('decaying');
+                document.body.classList.remove('heavy-decay');
+            }
+        }
+        
+        function playAudio() {
+            if (!audioBuffer || isPlaying) return;
+            
+            if (audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+            
+            source = audioContext.createBufferSource();
+            source.buffer = audioBuffer;
+            
+            // Connect: source -> distortion -> filter -> compressor -> convolver -> gain -> destination
+            source.connect(distortionNode);
+            distortionNode.connect(filterNode);
+            filterNode.connect(compressorNode);
+            compressorNode.connect(convolverNode);
+            convolverNode.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            source.onended = () => {
+                if (isPlaying && pauseTime === 0) {
+                    isPlaying = false;
+                    pauseTime = 0;
+                    startTime = 0;
+                }
+            };
+            
+            source.start(0, pauseTime);
+            startTime = audioContext.currentTime - pauseTime;
+            isPlaying = true;
+            
+            applyGlitch();
+        }
+        
+        function pauseAudio() {
+            if (!isPlaying) return;
+            
+            pauseTime = audioContext.currentTime - startTime;
+            if (source) {
+                try {
+                    source.stop();
+                    source.disconnect();
+                } catch (e) {
+                    console.error('Error stopping source:', e);
+                }
+            }
+            isPlaying = false;
+        }
+        
+        function stopAudio() {
+            if (source) {
+                try {
+                    source.stop();
+                    source.disconnect();
+                } catch (e) {
+                    console.error('Error stopping source:', e);
+                }
+            }
+            isPlaying = false;
+            pauseTime = 0;
+            startTime = 0;
+        }
+        
+        let glitchInterval;
+        function applyGlitch() {
+            clearInterval(glitchInterval);
+            const intensity = parseInt(glitchControl.value);
+            
+            if (intensity > 0 && isPlaying) {
+                glitchInterval = setInterval(() => {
+                    if (Math.random() * 100 < intensity && gainNode) {
+                        const currentTime = audioContext.currentTime;
+                        const glitchDuration = Math.random() * 0.1;
+                        
+                        try {
+                            gainNode.gain.cancelScheduledValues(currentTime);
+                            gainNode.gain.setValueAtTime(gainNode.gain.value, currentTime);
+                            gainNode.gain.exponentialRampToValueAtTime(0.01, currentTime + glitchDuration);
+                            gainNode.gain.exponentialRampToValueAtTime(1, currentTime + glitchDuration * 2);
+                        } catch (e) {
+                            console.error('Glitch error:', e);
+                        }
+                    }
+                }, 100);
+            }
+        }
+        
+        // Event listeners
+        playBtn.addEventListener('click', playAudio);
+        pauseBtn.addEventListener('click', pauseAudio);
+        stopBtn.addEventListener('click', stopAudio);
+        
+        resetBtn.addEventListener('click', () => {
+            bitcrushControl.value = 16;
+            distortionControl.value = 0;
+            glitchControl.value = 0;
+            reverbControl.value = 0;
+            filterControl.value = 22000;
+            compressionControl.value = 0;
+            
+            updateAllControls();
+            updateVisualDecay();
+        });
+        
+        bitcrushControl.addEventListener('input', (e) => {
+            const bits = parseInt(e.target.value);
+            document.getElementById('bitcrushValue').textContent = bits;
+            updateBuildings('bitcrushBuildings', bits, 16, true);
+            
+            const distAmount = (16 - bits) * 5;
+            if (distortionNode) {
+                distortionNode.curve = makeDistortionCurve(distAmount);
+            }
+            updateVisualDecay();
+        });
+        
+        distortionControl.addEventListener('input', (e) => {
+            const amount = parseInt(e.target.value);
+            document.getElementById('distortionValue').textContent = amount;
+            updateBuildings('distortionBuildings', amount, 100);
+            if (distortionNode) {
+                distortionNode.curve = makeDistortionCurve(amount);
+            }
+            updateVisualDecay();
+        });
+        
+        glitchControl.addEventListener('input', (e) => {
+            const intensity = parseInt(e.target.value);
+            document.getElementById('glitchValue').textContent = intensity + '%';
+            updateBuildings('glitchBuildings', intensity, 100);
+            if (isPlaying) {
+                applyGlitch();
+            }
+            updateVisualDecay();
+        });
+        
+        reverbControl.addEventListener('input', (e) => {
+            const decay = parseFloat(e.target.value);
+            document.getElementById('reverbValue').textContent = decay.toFixed(1) + 's';
+            updateBuildings('reverbBuildings', decay, 5);
+            if (convolverNode) {
+                createReverbImpulse(decay);
+            }
+            updateVisualDecay();
+        });
+        
+        filterControl.addEventListener('input', (e) => {
+            const freq = parseInt(e.target.value);
+            document.getElementById('filterValue').textContent = (freq / 1000).toFixed(1) + 'kHz';
+            updateBuildings('filterBuildings', freq, 22000, true);
+            if (filterNode) {
+                filterNode.frequency.setValueAtTime(freq, audioContext.currentTime);
+            }
+            updateVisualDecay();
+        });
+        
+        compressionControl.addEventListener('input', (e) => {
+            const ratio = parseInt(e.target.value);
+            document.getElementById('compressionValue').textContent = ratio;
+            updateBuildings('compressionBuildings', ratio, 20);
+            if (compressorNode) {
+                compressorNode.ratio.value = ratio > 0 ? ratio : 1;
+                compressorNode.threshold.value = ratio > 0 ? -40 : -50;
+            }
+            updateVisualDecay();
+        });
+        
+        function updateAllControls() {
+            bitcrushControl.dispatchEvent(new Event('input'));
+            distortionControl.dispatchEvent(new Event('input'));
+            glitchControl.dispatchEvent(new Event('input'));
+            reverbControl.dispatchEvent(new Event('input'));
+            filterControl.dispatchEvent(new Event('input'));
+            compressionControl.dispatchEvent(new Event('input'));
+        }
+        
+        // Initialize building states on load
+        updateAllControls();
+    </script>
+
+
+</body></html>
